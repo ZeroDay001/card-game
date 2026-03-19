@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Карточная игра · с никами</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+        body {
+            background: #1a4d3e;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px;
+        }
+        .screen {
+            background: #2d5a4b;
+            border-radius: 32px;
+            padding: 20px 16px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 15px 25px rgba(0,0,0,0.5);
+            color: white;
+        }
+        .hidden {
+            display: none !important;
+        }
+        h1, h2 {
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 0 #1e3b2e;
+        }
+        button, input, textarea {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 60px;
+            margin: 8px 0;
+            font-weight: bold;
+        }
+        button {
+            background: #d4af37;
+            color: #1e3b2e;
+            box-shadow: 0 5px 0 #7f5f20;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        button:active {
+            transform: translateY(5px);
+            box-shadow: none;
+        }
+        button.secondary {
+            background: #5b8c6f;
+            box-shadow: 0 5px 0 #2d5a4b;
+        }
+        input, textarea {
+            background: #f0e6d2;
+            border: 2px solid #b68b40;
+            text-align: left;
+            padding: 10px;
+            border-radius: 20px;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .or {
+            margin: 10px 0;
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+        .cards-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        .card-item {
+            background: #f5e6d3;
+            border-radius: 16px;
+            padding: 10px;
+            width: 140px;
+            text-align: center;
+            color: black;
+            border: 3px solid #6b4f32;
+            box-shadow: 0 4px 0 #4a3723;
+            position: relative;
+        }
+        .card-item img {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            background: #ccc;
+        }
+        .card-item h4 {
+            margin: 5px 0;
+            font-size: 1rem;
+        }
+        .card-item .stats {
+            font-weight: bold;
+            display: flex;
+            justify-content: space-around;
+        }
+        .card-actions {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        .card-actions button {
+            width: auto;
+            padding: 5px 10px;
+            font-size: 0.9rem;
+            background: #d4af37;
+            box-shadow: 0 3px 0 #7f5f20;
+        }
+        .deck-count {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #9b2c2c;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid white;
+        }
+        #deck-stats {
+            font-size: 1.3rem;
+            margin: 10px 0;
+            background: #1e7e5c;
+            padding: 10px;
+            border-radius: 40px;
+        }
+        #image-preview img {
+            max-width: 100px;
+            max-height: 100px;
+            margin: 10px 0;
+            border: 2px solid white;
+            border-radius: 10px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: #1e7e5c;
+            padding: 10px 16px;
+            border-radius: 40px;
+        }
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 20px;
+            background: #0b4d3a;
+            color: white;
+            text-align: center;
+        }
+        .game-board {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .opponent-area, .player-area {
+            background: #1e7e5c;
+            border-radius: 24px;
+            padding: 12px;
+        }
+        .hero-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            background: #0b4d3a;
+            padding: 8px 16px;
+            border-radius: 40px;
+        }
+        .battlefield {
+            min-height: 110px;
+            background: #5b8c6f;
+            border-radius: 20px;
+            padding: 8px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            margin: 8px 0;
+            border: 2px solid #b68b40;
+        }
+        .hand {
+            min-height: 100px;
+            background: #325c47;
+            border-radius: 20px;
+            padding: 8px;
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            border: 2px dashed #b68b40;
+        }
+        .card {
+            flex: 0 0 auto;
+            width: 85px;
+            background: #f5e6d3;
+            border-radius: 12px;
+            border: 3px solid #6b4f32;
+            padding: 6px 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: black;
+            font-weight: bold;
+            box-shadow: 0 4px 0 #4a3723;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .card.in-hand:hover {
+            transform: translateY(-5px);
+        }
+        .card .name {
+            font-size: 0.8rem;
+            background: #603d20;
+            color: white;
+            border-radius: 20px;
+            padding: 2px;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+        .card .cost {
+            background: #2a6fdb;
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            border: 2px solid white;
+            margin-bottom: 4px;
+        }
+        .card .stats {
+            display: flex;
+            justify-content: space-between;
+            background: #00000060;
+            color: white;
+            border-radius: 20px;
+            padding: 4px;
+            font-size: 0.9rem;
+        }
+        .card.can-attack {
+            box-shadow: 0 0 0 4px yellow;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #b68b40;
+            padding: 10px 20px;
+            border-radius: 40px;
+            color: #1e3b2e;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        #end-turn-btn {
+            width: auto;
+            padding: 8px 20px;
+            font-size: 1rem;
+            background: #9b2c2c;
+            color: white;
+            box-shadow: 0 4px 0 #5c1a1a;
+        }
+        @media (max-width: 400px) {
+            .card {
+                width: 70px;
+                font-size: 0.7rem;
+            }
+            .hero-info {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Экран входа -->
+    <div id="login-screen" class="screen active">
+        <h1>Карточная битва</h1>
+        <p>Введите ваш никнейм</p>
+        <input type="text" id="login-username" placeholder="Ник" required>
+        <button id="login-btn">Войти</button>
+        <div id="login-message" class="message"></div>
+    </div>
+
+    <!-- Главное меню -->
+    <div id="start-screen" class="screen hidden">
+        <div class="header">
+            <span>Привет, <span id="username-display"></span>!</span>
+        </div>
+        <button id="host-game">Создать игру (хост)</button>
+        <div class="or">или</div>
+        <input type="text" id="room-id-input" placeholder="ID комнаты">
+        <button id="join-game">Подключиться</button>
+        <hr>
+        <button id="edit-cards-btn" class="secondary">Редактор карт</button>
+        <button id="edit-deck-btn" class="secondary">Конструктор колоды</button>
+    </div>
+
+    <!-- Редактор карт -->
+    <div id="editor-screen" class="screen hidden">
+        <h2>Редактор карт</h2>
+        <form id="card-form">
+            <input type="hidden" id="card-id">
+            <input type="text" id="card-name" placeholder="Название" required>
+            <textarea id="card-description" placeholder="Описание"></textarea>
+            <input type="number" id="card-attack" placeholder="Атака" required>
+            <input type="number" id="card-health" placeholder="Здоровье" required>
+            <input type="text" id="card-bonus" placeholder="Бонусный эффект">
+            <input type="file" id="card-image" accept="image/*">
+            <div id="image-preview"></div>
+            <button type="submit">Сохранить карту</button>
+            <button type="button" id="cancel-edit">Отмена</button>
+        </form>
+        <h3>Мои карты</h3>
+        <div id="cards-list" class="cards-grid"></div>
+        <button id="back-to-start-from-editor">Назад</button>
+    </div>
+
+    <!-- Конструктор колоды -->
+    <div id="deck-screen" class="screen hidden">
+        <h2>Конструктор колоды</h2>
+        <div id="deck-stats">Колода: <span id="deck-count">0</span>/50 карт</div>
+        <div id="deck-cards-list" class="cards-grid"></div>
+        <h3>Доступные карты</h3>
+        <div id="available-cards-list" class="cards-grid"></div>
+        <button id="back-to-start-from-deck">Назад</button>
+    </div>
+
+    <!-- Игровой экран -->
+    <div id="game-screen" class="screen hidden">
+        <div class="game-board">
+            <div class="opponent-area">
+                <div class="hero-info">
+                    <span class="hero-health" id="opponent-health">30</span>
+                    <span class="mana" id="opponent-mana">⚡0/0</span>
+                </div>
+                <div class="battlefield" id="opponent-field"></div>
+                <div class="hand" id="opponent-hand"></div>
+            </div>
+
+            <div class="status-bar">
+                <span id="turn-indicator">Ваш ход</span>
+                <button id="end-turn-btn">Завершить ход</button>
+            </div>
+
+            <div class="player-area">
+                <div class="hand" id="player-hand"></div>
+                <div class="battlefield" id="player-field"></div>
+                <div class="hero-info">
+                    <span class="hero-health" id="player-health">30</span>
+                    <span class="mana" id="player-mana">⚡0/0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================== Глобальные переменные ==================
+        let ws = null;
+        let currentUser = null;
+        let availableCards = [];
+        let currentDeck = [];
+        let isHost = false;
+        let roomId = null;
+        let myPlayerId = null;
+        let gameState = {
+            turn: 'player',
+            player: { health: 30, maxMana: 0, currentMana: 0, deck: [], hand: [], field: [] },
+            opponent: { health: 30, maxMana: 0, currentMana: 0, deck: [], hand: [], field: [] },
+        };
+
+        // ================== DOM элементы ==================
+        const loginScreen = document.getElementById('login-screen');
+        const startScreen = document.getElementById('start-screen');
+        const editorScreen = document.getElementById('editor-screen');
+        const deckScreen = document.getElementById('deck-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const loginUsername = document.getElementById('login-username');
+        const loginBtn = document.getElementById('login-btn');
+        const loginMessage = document.getElementById('login-message');
+        const usernameDisplay = document.getElementById('username-display');
+
+        // Главное меню
+        const hostBtn = document.getElementById('host-game');
+        const joinBtn = document.getElementById('join-game');
+        const roomIdInput = document.getElementById('room-id-input');
+        const editCardsBtn = document.getElementById('edit-cards-btn');
+        const editDeckBtn = document.getElementById('edit-deck-btn');
+        const backToStartFromEditor = document.getElementById('back-to-start-from-editor');
+        const backToStartFromDeck = document.getElementById('back-to-start-from-deck');
+
+        // Редактор карт
+        const cardForm = document.getElementById('card-form');
+        const cardId = document.getElementById('card-id');
+        const cardName = document.getElementById('card-name');
+        const cardDescription = document.getElementById('card-description');
+        const cardAttack = document.getElementById('card-attack');
+        const cardHealth = document.getElementById('card-health');
+        const cardBonus = document.getElementById('card-bonus');
+        const cardImage = document.getElementById('card-image');
+        const imagePreview = document.getElementById('image-preview');
+        const cancelEdit = document.getElementById('cancel-edit');
+        const cardsListDiv = document.getElementById('cards-list');
+
+        // Конструктор колоды
+        const deckCountSpan = document.getElementById('deck-count');
+        const deckCardsDiv = document.getElementById('deck-cards-list');
+        const availableCardsDiv = document.getElementById('available-cards-list');
+
+        // Игровой экран
+        const endTurnBtn = document.getElementById('end-turn-btn');
+
+        // ================== Утилиты ==================
+        function generateCardId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        }
+
+        // ================== Подключение к серверу ==================
+        function connectWebSocket(username) {
+            // Адрес сервера – замените на ваш при необходимости
+            const SERVER_URL = 'ws://localhost:8765';
+            ws = new WebSocket(SERVER_URL);
+
+            ws.onopen = () => {
+                console.log('WebSocket открыт');
+                ws.send(JSON.stringify({ type: 'login', username }));
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log('Получено:', data);
+
+                if (data.type === 'login_ok') {
+                    currentUser = data.username;
+                    loginScreen.classList.add('hidden');
+                    startScreen.classList.remove('hidden');
+                    usernameDisplay.textContent = currentUser;
+                    // Загружаем карты и колоду пользователя
+                    ws.send(JSON.stringify({ type: 'get_cards' }));
+                    ws.send(JSON.stringify({ type: 'get_deck' }));
+                }
+                else if (data.type === 'cards_list') {
+                    availableCards = data.cards || [];
+                    if (!availableCards.length) {
+                        createDefaultCards();
+                    }
+                    renderCardsList();
+                }
+                else if (data.type === 'save_cards_ok') {
+                    alert('Карты сохранены');
+                }
+                else if (data.type === 'deck_list') {
+                    currentDeck = data.deck || [];
+                    renderDeckBuilder();
+                }
+                else if (data.type === 'save_deck_ok') {
+                    alert('Колода сохранена');
+                }
+                else if (data.type === 'room_created') {
+                    roomId = data.roomId;
+                    alert(`ID комнаты: ${roomId}. Передайте его другу.`);
+                }
+                else if (data.type === 'init') {
+                    myPlayerId = data.playerId;
+                    roomId = data.roomId;
+                    startScreen.classList.add('hidden');
+                    gameScreen.classList.remove('hidden');
+                    isHost = (myPlayerId === 'player1');
+                    if (isHost) {
+                        startNewGame();
+                    }
+                }
+                else if (data.type === 'gameState') {
+                    gameState = data.state;
+                    updateUI();
+                }
+                else if (data.type === 'action') {
+                    handleOpponentAction(data.action);
+                }
+                else if (data.type === 'error') {
+                    alert(data.message);
+                }
+            };
+
+            ws.onerror = (err) => {
+                console.error('WebSocket ошибка:', err);
+                loginMessage.textContent = 'Ошибка соединения с сервером';
+            };
+
+            ws.onclose = () => {
+                console.log('Соединение закрыто');
+                if (currentUser) {
+                    alert('Соединение с сервером потеряно. Перезагрузите страницу.');
+                }
+            };
+        }
+
+        // Создание базовых карт, если у пользователя их нет
+        function createDefaultCards() {
+            availableCards = [
+                { id: generateCardId(), name: 'Волк', description: 'Злой волк', attack: 3, health: 2, cost: 2, bonus: '', image: '' },
+                { id: generateCardId(), name: 'Медведь', description: 'Сильный медведь', attack: 4, health: 3, cost: 3, bonus: '', image: '' },
+                { id: generateCardId(), name: 'Орёл', description: 'Быстрый орёл', attack: 5, health: 4, cost: 4, bonus: '', image: '' },
+                { id: generateCardId(), name: 'Дракон', description: 'Огненный дракон', attack: 6, health: 5, cost: 5, bonus: '', image: '' },
+                { id: generateCardId(), name: 'Рыцарь', description: 'Храбрый рыцарь', attack: 2, health: 1, cost: 1, bonus: '', image: '' },
+                { id: generateCardId(), name: 'Лучник', description: 'Меткий лучник', attack: 2, health: 2, cost: 2, bonus: '', image: '' },
+                { id: generateCardId(), name: 'Целитель', description: 'Лечит', attack: 1, health: 4, cost: 3, bonus: '', image: '' },
+                { id: generateCardId(), name: 'Маг', description: 'Колдует', attack: 4, health: 2, cost: 4, bonus: '', image: '' }
+            ];
+            ws.send(JSON.stringify({ type: 'save_cards', cards: availableCards }));
+        }
+
+        // ================== Редактор карт ==================
+        function renderCardsList() {
+            cardsListDiv.innerHTML = '';
+            availableCards.forEach(card => {
+                const el = document.createElement('div');
+                el.className = 'card-item';
+                el.innerHTML = `
+                    <img src="${card.image || 'https://via.placeholder.com/100?text=No+Image'}" alt="${card.name}">
+                    <h4>${card.name}</h4>
+                    <div class="stats">⚔️${card.attack} ❤️${card.health}</div>
+                    <div class="card-actions">
+                        <button onclick="editCard('${card.id}')">✏️</button>
+                        <button onclick="deleteCard('${card.id}')">🗑️</button>
+                    </div>
+                `;
+                cardsListDiv.appendChild(el);
+            });
+        }
+
+        window.editCard = (id) => {
+            const card = availableCards.find(c => c.id === id);
+            if (!card) return;
+            cardId.value = card.id;
+            cardName.value = card.name;
+            cardDescription.value = card.description || '';
+            cardAttack.value = card.attack;
+            cardHealth.value = card.health;
+            cardBonus.value = card.bonus || '';
+            if (card.image) {
+                imagePreview.innerHTML = `<img src="${card.image}" style="max-width:100px">`;
+            } else {
+                imagePreview.innerHTML = '';
+            }
+        };
+
+        window.deleteCard = (id) => {
+            if (confirm('Удалить карту?')) {
+                availableCards = availableCards.filter(c => c.id !== id);
+                currentDeck = currentDeck.filter(cid => cid !== id);
+                ws.send(JSON.stringify({ type: 'save_cards', cards: availableCards }));
+                ws.send(JSON.stringify({ type: 'save_deck', deck: currentDeck }));
+                renderCardsList();
+                if (!deckScreen.classList.contains('hidden')) renderDeckBuilder();
+            }
+        };
+
+        cardForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = cardId.value;
+            const name = cardName.value.trim();
+            const description = cardDescription.value.trim();
+            const attack = parseInt(cardAttack.value);
+            const health = parseInt(cardHealth.value);
+            const bonus = cardBonus.value.trim();
+            const file = cardImage.files[0];
+
+            if (!name || isNaN(attack) || isNaN(health)) {
+                alert('Заполните обязательные поля');
+                return;
+            }
+
+            const processImage = (imageData) => {
+                if (id) {
+                    const index = availableCards.findIndex(c => c.id === id);
+                    if (index !== -1) {
+                        availableCards[index] = {
+                            ...availableCards[index],
+                            name,
+                            description,
+                            attack,
+                            health,
+                            cost: attack,
+                            bonus,
+                            image: imageData || availableCards[index].image
+                        };
+                    }
+                } else {
+                    const newCard = {
+                        id: generateCardId(),
+                        name,
+                        description,
+                        attack,
+                        health,
+                        cost: attack,
+                        bonus,
+                        image: imageData || ''
+                    };
+                    availableCards.push(newCard);
+                }
+                ws.send(JSON.stringify({ type: 'save_cards', cards: availableCards }));
+                renderCardsList();
+                resetCardForm();
+                if (!deckScreen.classList.contains('hidden')) renderDeckBuilder();
+            };
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => processImage(event.target.result);
+                reader.readAsDataURL(file);
+            } else {
+                processImage(null);
+            }
+        });
+
+        cancelEdit.addEventListener('click', resetCardForm);
+        function resetCardForm() {
+            cardId.value = '';
+            cardForm.reset();
+            imagePreview.innerHTML = '';
+        }
+
+        // ================== Конструктор колоды ==================
+        function renderDeckBuilder() {
+            deckCountSpan.textContent = currentDeck.length;
+
+            const countMap = new Map();
+            currentDeck.forEach(cid => countMap.set(cid, (countMap.get(cid) || 0) + 1));
+
+            deckCardsDiv.innerHTML = '';
+            for (let [cid, cnt] of countMap.entries()) {
+                const card = availableCards.find(c => c.id === cid);
+                if (!card) continue;
+                const el = document.createElement('div');
+                el.className = 'card-item';
+                el.innerHTML = `
+                    <div class="deck-count">${cnt}</div>
+                    <img src="${card.image || 'https://via.placeholder.com/100?text=No+Image'}" alt="${card.name}">
+                    <h4>${card.name}</h4>
+                    <div class="stats">⚔️${card.attack} ❤️${card.health}</div>
+                    <div class="card-actions">
+                        <button onclick="removeFromDeck('${cid}')">−</button>
+                    </div>
+                `;
+                deckCardsDiv.appendChild(el);
+            }
+
+            availableCardsDiv.innerHTML = '';
+            availableCards.forEach(card => {
+                const currentCount = currentDeck.filter(id => id === card.id).length;
+                const maxReached = currentCount >= 3;
+                const totalCards = currentDeck.length;
+                const deckFull = totalCards >= 50;
+
+                const el = document.createElement('div');
+                el.className = 'card-item';
+                el.innerHTML = `
+                    <img src="${card.image || 'https://via.placeholder.com/100?text=No+Image'}" alt="${card.name}">
+                    <h4>${card.name}</h4>
+                    <div class="stats">⚔️${card.attack} ❤️${card.health}</div>
+                    <div class="card-actions">
+                        ${!maxReached && !deckFull ? `<button onclick="addToDeck('${card.id}')">+</button>` : ''}
+                        ${currentCount > 0 ? `<span style="background:#1e7e5c; color:white; padding:3px 8px; border-radius:20px;">${currentCount}/3</span>` : ''}
+                    </div>
+                `;
+                availableCardsDiv.appendChild(el);
+            });
+        }
+
+        window.addToDeck = (cardId) => {
+            const currentCount = currentDeck.filter(id => id === cardId).length;
+            if (currentCount >= 3) {
+                alert('Нельзя добавить больше 3 экземпляров этой карты');
+                return;
+            }
+            if (currentDeck.length >= 50) {
+                alert('Колода не может содержать больше 50 карт');
+                return;
+            }
+            currentDeck.push(cardId);
+            ws.send(JSON.stringify({ type: 'save_deck', deck: currentDeck }));
+            renderDeckBuilder();
+        };
+
+        window.removeFromDeck = (cardId) => {
+            const index = currentDeck.lastIndexOf(cardId);
+            if (index !== -1) {
+                currentDeck.splice(index, 1);
+                ws.send(JSON.stringify({ type: 'save_deck', deck: currentDeck }));
+                renderDeckBuilder();
+            }
+        };
+
+        // ================== Игровая логика ==================
+        function startNewGame() {
+            let deckCards = [];
+            if (currentDeck.length === 0) {
+                const temp = [];
+                availableCards.forEach(card => {
+                    for (let i = 0; i < 3; i++) temp.push(card);
+                });
+                shuffleArray(temp);
+                deckCards = temp.slice(0, 50);
+            } else {
+                deckCards = currentDeck.map(cid => {
+                    const card = availableCards.find(c => c.id === cid);
+                    if (!card) return null;
+                    return { ...card, id: Math.random().toString(36).substr(2, 8) };
+                }).filter(c => c !== null);
+                shuffleArray(deckCards);
+            }
+
+            gameState = {
+                turn: 'player',
+                player: {
+                    health: 30,
+                    maxMana: 0,
+                    currentMana: 0,
+                    deck: deckCards,
+                    hand: [],
+                    field: []
+                },
+                opponent: {
+                    health: 30,
+                    maxMana: 0,
+                    currentMana: 0,
+                    deck: [],
+                    hand: [],
+                    field: []
+                }
+            };
+            for (let i = 0; i < 3; i++) drawCard('player');
+            for (let i = 0; i < 3; i++) drawCard('opponent');
+            updateUI();
+        }
+
+        function drawCard(playerSide) {
+            const player = gameState[playerSide];
+            if (player.deck.length === 0) return;
+            const card = player.deck.pop();
+            player.hand.push(card);
+        }
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        }
+
+        function sendAction(action) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'action', action, roomId }));
+            }
+        }
+
+        function handleOpponentAction(action) {
+            switch (action.type) {
+                case 'playCard':
+                    const card = gameState.opponent.hand[action.cardIndex];
+                    if (card) {
+                        gameState.opponent.hand.splice(action.cardIndex, 1);
+                        gameState.opponent.field.push({ ...card, canAttack: false });
+                        gameState.opponent.currentMana -= action.cost;
+                    }
+                    break;
+                case 'attack':
+                    const attacker = gameState.opponent.field[action.attackerIndex];
+                    if (attacker) {
+                        attacker.canAttack = false;
+                        gameState.player.health -= attacker.attack;
+                    }
+                    break;
+                case 'endTurn':
+                    gameState.turn = 'player';
+                    break;
+            }
+            updateUI();
+        }
+
+        function playCard(cardIndex) {
+            if (gameState.turn !== 'player') return;
+            const card = gameState.player.hand[cardIndex];
+            if (!card || gameState.player.currentMana < card.cost) return;
+
+            gameState.player.hand.splice(cardIndex, 1);
+            gameState.player.currentMana -= card.cost;
+            gameState.player.field.push({ ...card, canAttack: false });
+
+            sendAction({ type: 'playCard', cardIndex, cost: card.cost });
+
+            updateUI();
+        }
+
+        function attackWithCreature(fieldIndex) {
+            if (gameState.turn !== 'player') return;
+            const attacker = gameState.player.field[fieldIndex];
+            if (!attacker || !attacker.canAttack) return;
+
+            attacker.canAttack = false;
+            gameState.opponent.health -= attacker.attack;
+
+            sendAction({ type: 'attack', attackerIndex: fieldIndex });
+
+            if (gameState.opponent.health <= 0) {
+                setTimeout(() => alert('Вы победили!'), 100);
+            }
+            updateUI();
+        }
+
+        function endTurn() {
+            if (gameState.turn !== 'player') return;
+
+            gameState.player.field.forEach(c => c.canAttack = false);
+            gameState.turn = 'opponent';
+
+            if (isHost) {
+                gameState.opponent.maxMana = Math.min(10, gameState.opponent.maxMana + 1);
+                gameState.opponent.currentMana = gameState.opponent.maxMana;
+                drawCard('opponent');
+                ws.send(JSON.stringify({ type: 'gameState', state: gameState, roomId }));
+            }
+
+            sendAction({ type: 'endTurn' });
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('player-health').innerText = gameState.player.health;
+            document.getElementById('player-mana').innerText = `⚡${gameState.player.currentMana}/${gameState.player.maxMana}`;
+            document.getElementById('opponent-health').innerText = gameState.opponent.health;
+            document.getElementById('opponent-mana').innerText = `⚡${gameState.opponent.currentMana}/${gameState.opponent.maxMana}`;
+            document.getElementById('turn-indicator').innerText = gameState.turn === 'player' ? 'Ваш ход' : 'Ход противника';
+
+            const playerField = document.getElementById('player-field');
+            const playerHand = document.getElementById('player-hand');
+            const opponentField = document.getElementById('opponent-field');
+            const opponentHand = document.getElementById('opponent-hand');
+
+            playerField.innerHTML = '';
+            playerHand.innerHTML = '';
+            opponentField.innerHTML = '';
+            opponentHand.innerHTML = '';
+
+            gameState.player.hand.forEach((card, index) => {
+                const el = createCardElement(card, 'hand');
+                el.addEventListener('click', () => playCard(index));
+                playerHand.appendChild(el);
+            });
+
+            gameState.player.field.forEach((card, index) => {
+                const el = createCardElement(card, 'field');
+                if (card.canAttack && gameState.turn === 'player') {
+                    el.classList.add('can-attack');
+                    el.addEventListener('click', () => attackWithCreature(index));
+                }
+                playerField.appendChild(el);
+            });
+
+            for (let i = 0; i < gameState.opponent.hand.length; i++) {
+                const el = document.createElement('div');
+                el.className = 'card in-hand';
+                el.style.background = '#3b2a1c';
+                el.style.justifyContent = 'center';
+                el.style.alignItems = 'center';
+                el.innerText = '???';
+                opponentHand.appendChild(el);
+            }
+
+            gameState.opponent.field.forEach((card) => {
+                opponentField.appendChild(createCardElement(card, 'field'));
+            });
+        }
+
+        function createCardElement(card, location) {
+            const div = document.createElement('div');
+            div.className = `card ${location === 'hand' ? 'in-hand' : 'on-field'}`;
+            if (card.image) {
+                div.innerHTML = `
+                    <div class="cost">${card.cost}</div>
+                    <img src="${card.image}" style="width:100%; height:60px; object-fit:cover; border-radius:8px;">
+                    <div class="stats">
+                        <span>⚔️${card.attack}</span>
+                        <span>❤️${card.health}</span>
+                    </div>
+                `;
+            } else {
+                div.innerHTML = `
+                    <div class="cost">${card.cost}</div>
+                    <div class="name">${card.name}</div>
+                    <div class="stats">
+                        <span>⚔️${card.attack}</span>
+                        <span>❤️${card.health}</span>
+                    </div>
+                `;
+            }
+            return div;
+        }
+
+        // ================== Навигация ==================
+        loginBtn.addEventListener('click', () => {
+            const username = loginUsername.value.trim();
+            if (!username) {
+                loginMessage.textContent = 'Введите ник';
+                return;
+            }
+            connectWebSocket(username);
+        });
+
+        editCardsBtn.addEventListener('click', () => {
+            startScreen.classList.add('hidden');
+            editorScreen.classList.remove('hidden');
+            renderCardsList();
+        });
+
+        editDeckBtn.addEventListener('click', () => {
+            startScreen.classList.add('hidden');
+            deckScreen.classList.remove('hidden');
+            renderDeckBuilder();
+        });
+
+        backToStartFromEditor.addEventListener('click', () => {
+            editorScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        });
+
+        backToStartFromDeck.addEventListener('click', () => {
+            deckScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        });
+
+        hostBtn.addEventListener('click', () => {
+            ws.send(JSON.stringify({ type: 'join', role: 'host' }));
+        });
+
+        joinBtn.addEventListener('click', () => {
+            const rid = roomIdInput.value.trim();
+            if (!rid) return;
+            ws.send(JSON.stringify({ type: 'join', role: 'client', roomId: rid }));
+        });
+
+        endTurnBtn.addEventListener('click', endTurn);
+
+        cardImage.addEventListener('change', () => {
+            const file = cardImage.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.innerHTML = `<img src="${e.target.result}" style="max-width:100px">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html>
